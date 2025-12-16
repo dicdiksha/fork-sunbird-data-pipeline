@@ -194,6 +194,10 @@
 # RVM / Ruby (system-wide)
 # -------------------------
 
+# -------------------------
+# RVM / Ruby
+# -------------------------
+
 - name: Import RVM GPG keys (system-wide)
   become: yes
   shell: |
@@ -223,13 +227,8 @@
     group: "{{ analytics_user }}"
     recurse: yes
 
-# -------------------------
-# Install Ruby via RVM
-# -------------------------
-
 - name: Install Ruby 2.6.6 via RVM
   become: yes
-  become_user: "{{ analytics_user }}"
   shell: |
     bash -lc "rvm install ruby-2.6.6 --autolibs=enable && rvm --default use ruby-2.6.6"
   args:
@@ -237,9 +236,9 @@
 
 - name: Install ruby-kafka gem
   become: yes
-  become_user: "{{ analytics_user }}"
   shell: |
     bash -lc "rvm use ruby-2.6.6 --default && gem install --user-install --no-document ruby-kafka"
+
 
 # -------------------------
 # Kafka
