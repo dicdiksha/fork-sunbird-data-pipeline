@@ -47,5 +47,12 @@
 
 - name: Set locale LC_ALL=en_US.UTF-8
   become: yes
-  become_user: "{{ analytics_user }}"
-  lineinfile: dest={{ analytics_user_home }}/.bashrc line='export LC_ALL=en_US.UTF-8'  state=present insertafter=EOF create=yes
+  lineinfile:
+    path: "/home/{{ analytics_user }}/.bashrc"
+    line: "export LC_ALL=en_US.UTF-8"
+    state: present
+    insertafter: EOF
+    create: yes
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
+    mode: '0644'
