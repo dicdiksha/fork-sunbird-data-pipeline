@@ -203,19 +203,22 @@
   apt_repository:
     repo: ppa:brightbox/ruby-ng
 
-- name: Install ruby-dev 2.6
-  apt:
-    name: ruby2.6-dev
-    state: present
-    update_cache: true
-
-- name: Install ruby-kafka gem
+# Install Ruby 2.6.6 via RVM (using bash login shell)
+- name: Install Ruby 2.6.6 via RVM
+  become: yes
   become_user: "{{ analytics_user }}"
   shell: |
-    bash -lc '
-      source /etc/profile.d/rvm.sh
-      rvm use ruby-2.6.6 --default
-      gem install --user-install --no-document ruby-kafka
+    bash -lc "rvm install ruby-2.6.6 --autolibs=enable && rvm --default use ruby-2.6.6"
+  args:
+    creates: "/home/{{ analytics_user }}/.rvm/rubies/ruby-2.6.6"
+
+# Install ruby-kafka gem
+- name: Install ruby-kafka gem
+  become: yes
+  become_user: "{{ analytics_user }}"
+  shell: |
+    bash -lc "rvm use ruby-2.6.6 --default && gem install --user-install --no-document ruby-kafka"
+
     '
 
 ## -------------------------
