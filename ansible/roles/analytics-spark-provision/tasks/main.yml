@@ -190,39 +190,64 @@
     recurse: yes
   become: yes
 
+# -------------------------
+# RVM / Ruby (system-wide)
+# -------------------------
+
+- name: Import RVM GPG keys (system-wide)
+  become: yes
+  shell: |
+    command -v gpg2 >/dev/null 2>&1 || apt-get install -y gnupg2
+    gpg2 --keyserver hkp://keyserver.ubuntu.com --recv-keys \
+      409B6B1796C275462A1703113804BB82D39DC0E3 \
+      7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+
+- name: Install system RVM
+  become: yes
+  shell: curl -sSL https://get.rvm.io | bash -s stable
+  args:
+    creates: /usr/local/rvm/bin/rvm
+
+- name: Add analytics user to rvm group
+  become: yes
+  user:
+    name: "{{ analytics_user }}"
+    groups: rvm
+    append: yes
+
+- name: Ensure analytics home ownership
+  become: yes
+  file:
+    path: "{{ analytics.base_path }}"
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_user }}"
+    recurse: yes
+
+# -------------------------
+# Install Ruby via RVM
+# -------------------------
+
 - name: Install Ruby 2.6.6 via RVM
+  become: yes
   become_user: "{{ analytics_user }}"
   shell: |
-    source /etc/profile.d/rvm.sh
-    rvm install ruby-2.6.6
-    rvm --default use ruby-2.6.6
+    bash -lc "rvm install ruby-2.6.6 --autolibs=enable && rvm --default use ruby-2.6.6"
   args:
-    creates: /home/{{ analytics_user }}/.rvm/rubies/ruby-2.6.6
-
-- name: Add ruby repository
-  apt_repository:
-    repo: ppa:brightbox/ruby-ng
-
-- name: Install ruby-dev 2.6
-  apt:
-    name: ruby2.6-dev
-    state: present
-    update_cache: true
+    creates: "/home/{{ analytics_user }}/.rvm/rubies/ruby-2.6.6"
 
 - name: Install ruby-kafka gem
+  become: yes
   become_user: "{{ analytics_user }}"
   shell: |
-    bash -lc '
-      source /etc/profile.d/rvm.sh
-      rvm use ruby-2.6.6 --default
-      gem install --user-install --no-document ruby-kafka
-      '
+    bash -lc "rvm use ruby-2.6.6 --default && gem install --user-install --no-document ruby-kafka"
 
-  ## -------------------------
-  ## Kafka
-  ## -------------------------
+# -------------------------
+# Kafka
+# -------------------------
 
 - name: Download Kafka
+  become: yes
+  become_user: "{{ analytics_user }}"
   get_url:
     url: https://archive.apache.org/dist/kafka/2.8.0/kafka_2.12-2.8.0.tgz
     dest: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
@@ -232,6 +257,8 @@
     - kafka-provision
 
 - name: Unarchive Kafka
+  become: yes
+  become_user: "{{ analytics_user }}"
   unarchive:
     src: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
     dest: "{{ analytics.home }}/"
@@ -242,15 +269,17 @@
   tags:
     - kafka-provision
 
-## -------------------------
-## Python 3.6
-## -------------------------
+# -------------------------
+# Python 3.6
+# -------------------------
 
 - name: Add python ppa
+  become: yes
   apt_repository:
     repo: ppa:deadsnakes/ppa
 
 - name: Install python 3.6
+  become: yes
   apt:
     name: python3.6
     state: present
