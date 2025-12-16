@@ -1,33 +1,31 @@
 ## Bootstrap for spark ##
-
-- name: Adding ENV Vars to bashrc file of spark.
+- name: Adding ENV Vars to analytics bashrc
   become: yes
-  become_user: "{{ analytics_user }}"
   lineinfile:
-    path: '{{ analytics_user_home }}/.bashrc'
-    line: 'export {{item.var}}={{item.value}}'
-    regexp: "export {{ item.var }}.*"
-  with_items:
-    - {var: 'azure_storage_key', value: '{{ sunbird_private_storage_account_name }}'}
-    - {var: 'azure_storage_secret', value: '{{ sunbird_private_storage_account_key }}'}
-    - {var: 'OCI_CLI_AUTH', value: 'instance_principal'}
+    path: "{{ analytics_user_home }}/.bashrc"
+    line: "export {{ item.var }}={{ item.value }}"
+    regexp: "^export {{ item.var }}="
+  loop:
+    - { var: 'azure_storage_key', value: '{{ sunbird_private_storage_account_name }}' }
+    - { var: 'azure_storage_secret', value: '{{ sunbird_private_storage_account_key }}' }
+    - { var: 'OCI_CLI_AUTH', value: 'instance_principal' }
  
-
-- name: Adding PATH for oci cli Vars to bashrc file of spark.
+- name: Adding PATH for oci cli to analytics bashrc
   become: yes
-  become_user: "{{ analytics_user }}"
   lineinfile:
-    path: '{{ analytics_user_home }}/.bashrc'
-    line: 'export PATH={{ analytics_user_home }}/bin:$PATH'
-    regexp: "export PATH={{ analytics_user_home }}/bin.*"
+    path: "{{ analytics_user_home }}/.bashrc"
+    line: "export PATH={{ analytics_user_home }}/bin:$PATH"
+    regexp: "^export PATH={{ analytics_user_home }}/bin"
   when: cloud_service_provider == "oci"
 
-- name: Configure OCI cli 
+- name: Configure OCI cli directory
   become: yes
-  become_user: "{{ analytics_user }}"
   file:
     path: "{{ analytics_user_home }}/.oci"
-    state: directory  
+    state: directory
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
+    mode: "0700"
   when: cloud_service_provider == "oci"
 
 # - name: Create OCI cli config location
