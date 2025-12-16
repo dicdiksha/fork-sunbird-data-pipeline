@@ -164,8 +164,10 @@
 
 - name: Install RVM
   become: yes
-  become_user: "{{ analytics_user }}"
-  shell: curl -sSL https://get.rvm.io | bash -s stable
+  shell: |
+    sudo -iu {{ analytics_user }} \
+    curl -sSL https://get.rvm.io | bash -s stable
+
 
 - name: Source RVM in bashrc
   become: yes
@@ -176,20 +178,20 @@
 
 - name: Install Ruby 2.6
   become: yes
-  become_user: "{{ analytics_user }}"
-  shell: >
-    bash -lc
-    "export PATH=$PATH:/home/analytics/.rvm/bin &&
-     rvm install ruby-2.6"
+  shell: |
+    sudo -iu {{ analytics_user }} bash -lc "
+    rvm install ruby-2.6
+    "
+
 
 - name: Install ruby-kafka
   become: yes
-  become_user: "{{ analytics_user }}"
-  shell: >
-    bash -ilc
-    "export PATH=$PATH:/home/analytics/.rvm/bin &&
-     rvm --default use ruby-2.6 &&
-     gem install --user-install --no-document ruby-kafka"
+  shell: |
+    sudo -iu {{ analytics_user }} bash -lc "
+    rvm --default use ruby-2.6 &&
+    gem install --user-install --no-document ruby-kafka
+    "
+
 
 # -------------------------
 # Kafka
