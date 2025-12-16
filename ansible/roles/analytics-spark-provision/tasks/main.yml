@@ -222,36 +222,36 @@
   ## Kafka
   ## -------------------------
 
-  - name: Download Kafka
-    get_url:
-      url: https://archive.apache.org/dist/kafka/2.8.0/kafka_2.12-2.8.0.tgz
-      dest: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
-      owner: "{{ analytics_user }}"
-      group: "{{ analytics_group }}"
-    tags:
-      - kafka-provision
+- name: Download Kafka
+  get_url:
+    url: https://archive.apache.org/dist/kafka/2.8.0/kafka_2.12-2.8.0.tgz
+    dest: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
+  tags:
+    - kafka-provision
 
-  - name: Unarchive Kafka
-    unarchive:
-      src: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
-      dest: "{{ analytics.home }}/"
-      copy: no
-      owner: "{{ analytics_user }}"
-      group: "{{ analytics_group }}"
-      creates: "{{ analytics.home }}/kafka_2.12-2.8.0"
-    tags:
-      - kafka-provision
+- name: Unarchive Kafka
+  unarchive:
+    src: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
+    dest: "{{ analytics.home }}/"
+    copy: no
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
+    creates: "{{ analytics.home }}/kafka_2.12-2.8.0"
+  tags:
+    - kafka-provision
 
-  ## -------------------------
-  ## Python 3.6
-  ## -------------------------
+## -------------------------
+## Python 3.6
+## -------------------------
 
-  - name: Add python ppa
-    apt_repository:
-      repo: ppa:deadsnakes/ppa
+- name: Add python ppa
+  apt_repository:
+    repo: ppa:deadsnakes/ppa
 
-  - name: Install python 3.6
-    apt:
-      name: python3.6
-      state: present
-      update_cache: true
+- name: Install python 3.6
+  apt:
+    name: python3.6
+    state: present
+    update_cache: true
