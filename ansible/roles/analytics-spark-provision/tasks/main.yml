@@ -266,19 +266,71 @@
   tags:
     - kafka-provision
 
-
 # -------------------------
-# Python 3.6
+# Python 3.6 Installation
 # -------------------------
 
-- name: Add python ppa
+- name: Add deadsnakes PPA for older Python versions
   become: yes
   apt_repository:
     repo: ppa:deadsnakes/ppa
+    state: present
 
-- name: Install python 3.6
+- name: Update apt cache
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Check if python3.6 package is available
+  become: yes
+  shell: apt-cache show python3.6 || true
+  register: python36_check
+  changed_when: false
+
+- name: Install Python 3.6 via package if available
   become: yes
   apt:
     name: python3.6
     state: present
-    update_cache: true
+  when: python36_check.stdout != ""
+
+- name: Install dependencies for building Python from source
+  become: yes
+  apt:
+    name:
+      - build-essential
+      - zlib1g-dev
+      - libssl-dev
+      - libbz2-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - wget
+    state: present
+  when: python36_check.stdout == ""
+
+- name: Download Python 3.6.15 source tarball
+  become: yes
+  get_url:
+    url: https://www.python.org/ftp/python/3.6.15/Python-3.6.15.tgz
+    dest: /tmp/Python-3.6.15.tgz
+  when: python36_check.stdout == ""
+
+- name: Extract Python 3.6.15 source
+  become: yes
+  unarchive:
+    src: /tmp/Python-3.6.15.tgz
+    dest: /tmp/
+    remote_src: yes
+  when: python36_check.stdout == ""
+
+- name: Build and install Python 3.6.15
+  become: yes
+  shell: |
+    cd /tmp/Python-3.6.15
+    ./configure --enable-optimizations
+    make -j $(nproc)
+    make altinstall
+  args:
+    creates: /usr/local/bin/python3.6
+  when: python36_check.stdout == ""
+
