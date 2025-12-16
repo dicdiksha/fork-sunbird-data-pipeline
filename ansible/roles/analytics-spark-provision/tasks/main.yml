@@ -1,14 +1,22 @@
 ## Provision Spark ##
 
-- name: Download Apache Spark {{ spark_version }} hadoop 2.7
+- name: Download Apache Spark
   become: yes
-  become_user: "{{ analytics_user }}"
-  get_url: url={{ spark_url }} dest={{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7.tgz force=no owner={{ analytics_user }} group={{ analytics_group }}
+  get_url:
+    url: "{{ spark_url }}"
+    dest: "{{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7.tgz"
+    force: no
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
 
-- name: Unarchive Spark {{ spark_version }} hadoop 2.7
+- name: Unarchive Spark
   become: yes
-  become_user: "{{ analytics_user }}"
-  unarchive: src={{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7.tgz dest={{ analytics.home }}/ copy=no owner={{ analytics_user }} group={{ analytics_group }} creates={{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7
+  unarchive:
+    src: "{{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7.tgz"
+    dest: "{{ analytics.home }}/"
+    copy: no
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
 
 - name: Download Scala 2.12.10
   become: yes
@@ -25,11 +33,12 @@
   become_user: "{{ analytics_user }}"
   file: path={{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7/jars/guava-14.0.1.jar state=absent
 
-- name: Download Guava 19.0 and copy to Spark jars folder
+- name: Remove Guava jar
   become: yes
-  become_user: "{{ analytics_user }}"
-  get_url: url={{ guava_url }} dest={{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7/jars/guava-19.0.jar timeout=1000 force=no owner={{ analytics_user }} group={{ analytics_group }}
-
+  file:
+    path: "{{ analytics.home }}/spark-{{ spark_version }}-bin-hadoop2.7/jars/guava-14.0.1.jar"
+    state: absent
+    
 - name: Remove jets3t 0.9.3 from Spark jars folder
   become: yes
   become_user: "{{ analytics_user }}"
