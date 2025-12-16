@@ -153,44 +153,50 @@
 # RVM / Ruby (ONLY valid place for become_user)
 # -------------------------
 
-- name: Import RVM keys
+- name: Import RVM GPG keys (system-wide)
   become: yes
   shell: |
-    sudo -iu {{ analytics_user }} \
-    gpg --keyserver hkp://keyserver.ubuntu.com \
-    --recv-keys \
-    409B6B1796C275462A1703113804BB82D39DC0E3 \
-    7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+    command -v gpg2 >/dev/null 2>&1 || apt-get install -y gnupg2
+    gpg2 --keyserver hkp://keyserver.ubuntu.com --recv-keys \
+      409B6B1796C275462A1703113804BB82D39DC0E3 \
+      7D2BAF1CF37B13E2069D6956105BD0E739499BDB
 
-- name: Install RVM
+- name: Install system RVM
   become: yes
   shell: |
-    sudo -iu {{ analytics_user }} \
     curl -sSL https://get.rvm.io | bash -s stable
+  args:
+    creates: /usr/local/rvm/bin/rvm
 
-
-- name: Source RVM in bashrc
+- name: Load RVM in analytics bashrc
   become: yes
   lineinfile:
-    path: "{{ analytics.base_path }}/.bashrc"
-    line: source /home/analytics/.rvm/scripts/rvm
+    path: /home/{{ analytics_user }}/.bashrc
+    line: 'source /etc/profile.d/rvm.sh'
     create: yes
+    
+- name: Add analytics user to rvm group
+  become: yes
+  user:
+    name: "{{ analytics_user }}"
+    groups: rvm
+    append: yes
 
 - name: Install Ruby 2.6
   become: yes
   shell: |
     sudo -iu {{ analytics_user }} bash -lc "
     rvm install ruby-2.6
+    rvm --default use ruby-2.6
     "
-
 
 - name: Install ruby-kafka
   become: yes
   shell: |
     sudo -iu {{ analytics_user }} bash -lc "
-    rvm --default use ruby-2.6 &&
-    gem install --user-install --no-document ruby-kafka
+    gem install --no-document ruby-kafka
     "
+
 
 
 # -------------------------
