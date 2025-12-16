@@ -246,7 +246,6 @@
 
 - name: Download Kafka
   become: yes
-  become_user: "{{ analytics_user }}"
   get_url:
     url: https://archive.apache.org/dist/kafka/2.8.0/kafka_2.12-2.8.0.tgz
     dest: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
@@ -257,7 +256,6 @@
 
 - name: Unarchive Kafka
   become: yes
-  become_user: "{{ analytics_user }}"
   unarchive:
     src: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
     dest: "{{ analytics.home }}/"
@@ -267,6 +265,7 @@
     creates: "{{ analytics.home }}/kafka_2.12-2.8.0"
   tags:
     - kafka-provision
+
 
 # -------------------------
 # Python 3.6
