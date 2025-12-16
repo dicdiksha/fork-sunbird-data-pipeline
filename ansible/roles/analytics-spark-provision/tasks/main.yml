@@ -190,69 +190,68 @@
     recurse: yes
   become: yes
 
-  - name: Install Ruby 2.6.6 via RVM
-    become_user: "{{ analytics_user }}"
-    shell: |
+- name: Install Ruby 2.6.6 via RVM
+  become_user: "{{ analytics_user }}"
+  shell: |
+    source /etc/profile.d/rvm.sh
+    rvm install ruby-2.6.6
+    rvm --default use ruby-2.6.6
+  args:
+    creates: /home/{{ analytics_user }}/.rvm/rubies/ruby-2.6.6
+
+- name: Add ruby repository
+  apt_repository:
+    repo: ppa:brightbox/ruby-ng
+
+- name: Install ruby-dev 2.6
+  apt:
+    name: ruby2.6-dev
+    state: present
+    update_cache: true
+
+- name: Install ruby-kafka gem
+  become_user: "{{ analytics_user }}"
+  shell: |
+    bash -lc '
       source /etc/profile.d/rvm.sh
-      rvm install ruby-2.6.6
-      rvm --default use ruby-2.6.6
-    args:
-      creates: /home/{{ analytics_user }}/.rvm/rubies/ruby-2.6.6
+      rvm use ruby-2.6.6 --default
+      gem install --user-install --no-document ruby-kafka
+    '
 
-  - name: Add ruby repository
-    apt_repository:
-      repo: ppa:brightbox/ruby-ng
+## -------------------------
+## Kafka
+## -------------------------
 
-  - name: Install ruby-dev 2.6
-    apt:
-      name: ruby2.6-dev
-      state: present
-      update_cache: true
+- name: Download Kafka
+  get_url:
+    url: https://archive.apache.org/dist/kafka/2.8.0/kafka_2.12-2.8.0.tgz
+    dest: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
+  tags:
+    - kafka-provision
 
-  - name: Install ruby-kafka gem
-    become_user: "{{ analytics_user }}"
-    shell: |
-      bash -lc '
-        source /etc/profile.d/rvm.sh
-        rvm use ruby-2.6.6 --default
-        gem install --user-install --no-document ruby-kafka
-      '
+- name: Unarchive Kafka
+  unarchive:
+    src: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
+    dest: "{{ analytics.home }}/"
+    copy: no
+    owner: "{{ analytics_user }}"
+    group: "{{ analytics_group }}"
+    creates: "{{ analytics.home }}/kafka_2.12-2.8.0"
+  tags:
+    - kafka-provision
 
-  ## -------------------------
-  ## Kafka
-  ## -------------------------
+## -------------------------
+## Python 3.6
+## -------------------------
 
-  - name: Download Kafka
-    get_url:
-      url: https://archive.apache.org/dist/kafka/2.8.0/kafka_2.12-2.8.0.tgz
-      dest: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
-      owner: "{{ analytics_user }}"
-      group: "{{ analytics_group }}"
-    tags:
-      - kafka-provision
+- name: Add python ppa
+  apt_repository:
+    repo: ppa:deadsnakes/ppa
 
-  - name: Unarchive Kafka
-    unarchive:
-      src: "{{ analytics.home }}/kafka_2.12-2.8.0.tgz"
-      dest: "{{ analytics.home }}/"
-      copy: no
-      owner: "{{ analytics_user }}"
-      group: "{{ analytics_group }}"
-      creates: "{{ analytics.home }}/kafka_2.12-2.8.0"
-    tags:
-      - kafka-provision
-
-  ## -------------------------
-  ## Python 3.6
-  ## -------------------------
-
-  - name: Add python ppa
-    apt_repository:
-      repo: ppa:deadsnakes/ppa
-
-  - name: Install python 3.6
-    apt:
-      name: python3.6
-      state: present
-      update_cache: true
-
+- name: Install python 3.6
+  apt:
+    name: python3.6
+    state: present
+    update_cache: true
